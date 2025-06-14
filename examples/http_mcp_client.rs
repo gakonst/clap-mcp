@@ -7,14 +7,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize tracing
     tracing_subscriber::registry()
         .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
 
     println!("Connecting to MCP server at http://127.0.0.1:8080...");
-    
+
     // Connect to server
     let client = McpTestClient::connect("127.0.0.1:8080").await?;
 
@@ -83,10 +82,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if result.is_error.unwrap_or(false) {
         println!("Error in result");
-    } else {
-        if let Some(text) = McpTestClient::extract_text(&result) {
-            println!("Result: {}", text);
-        }
+    } else if let Some(text) = McpTestClient::extract_text(&result) {
+        println!("Result: {}", text);
     }
 
     // Call multiply
@@ -97,24 +94,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if result.is_error.unwrap_or(false) {
         println!("Error in result");
-    } else {
-        if let Some(text) = McpTestClient::extract_text(&result) {
-            println!("Result: {}", text);
-        }
+    } else if let Some(text) = McpTestClient::extract_text(&result) {
+        println!("Result: {}", text);
     }
 
     // Call hello
     println!("\n=== Testing hello(MCP User, excited=true) ===");
     let result = client
-        .call_tool("hello", Some(json!({ "name": "MCP User", "excited": true })))
+        .call_tool(
+            "hello",
+            Some(json!({ "name": "MCP User", "excited": true })),
+        )
         .await?;
 
     if result.is_error.unwrap_or(false) {
         println!("Error in result");
-    } else {
-        if let Some(text) = McpTestClient::extract_text(&result) {
-            println!("Result: {}", text);
-        }
+    } else if let Some(text) = McpTestClient::extract_text(&result) {
+        println!("Result: {}", text);
     }
 
     println!("\nAll tests complete!");

@@ -70,13 +70,13 @@ enum Commands {
         #[arg(short, long, default_value = "false")]
         excited: bool,
     },
-    
+
     /// Square a number (positional argument example)
     Square {
         /// The number to square
         number: f64,
     },
-    
+
     /// Echo text with optional suffix (mixed positional and named args)
     Echo {
         /// Text to echo
@@ -115,10 +115,12 @@ fn execute_command(cmd: Commands) -> Result<String, String> {
                 Ok(format!("Hello, {}.", name))
             }
         }
-        Commands::Square { number } => {
-            Ok(format!("{} squared is {}", number, number * number))
-        }
-        Commands::Echo { text, suffix, uppercase } => {
+        Commands::Square { number } => Ok(format!("{} squared is {}", number, number * number)),
+        Commands::Echo {
+            text,
+            suffix,
+            uppercase,
+        } => {
             let mut result = text.clone();
             if let Some(suf) = suffix {
                 result.push(' ');

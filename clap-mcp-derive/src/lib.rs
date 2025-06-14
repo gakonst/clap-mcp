@@ -39,59 +39,45 @@ pub fn derive_mcp_mode(input: TokenStream) -> TokenStream {
 }
 
 fn find_mode_flag_field(data: &Data) -> Option<Ident> {
-    match data {
-        Data::Struct(data_struct) => {
-            match &data_struct.fields {
-                Fields::Named(fields) => {
-                    for field in &fields.named {
-                        for attr in &field.attrs {
-                            if attr.path().is_ident("mcp") {
-                                // For syn 2.0, we need to parse the attribute differently
-                                let attr_str = quote!(#attr).to_string();
-                                if attr_str.contains("mode_flag") {
-                                    return field.ident.clone();
-                                }
-                            }
+    if let Data::Struct(data_struct) = data {
+        if let Fields::Named(fields) = &data_struct.fields {
+            for field in &fields.named {
+                for attr in &field.attrs {
+                    if attr.path().is_ident("mcp") {
+                        // For syn 2.0, we need to parse the attribute differently
+                        let attr_str = quote!(#attr).to_string();
+                        if attr_str.contains("mode_flag") {
+                            return field.ident.clone();
                         }
                     }
                 }
-                _ => {}
             }
         }
-        _ => {}
     }
     None
 }
 
 fn find_subcommand_field(data: &Data) -> Option<(Ident, Type)> {
-    match data {
-        Data::Struct(data_struct) => {
-            match &data_struct.fields {
-                Fields::Named(fields) => {
-                    for field in &fields.named {
-                        for attr in &field.attrs {
-                            if attr.path().is_ident("command") {
-                                // For syn 2.0, we need to parse the attribute differently
-                                let attr_str = quote!(#attr).to_string();
-                                if attr_str.contains("subcommand") {
-                                    let ty = &field.ty;
-                                    // Extract the inner type if it's Option<T>
-                                    let inner_type = if let Type::Path(type_path) = ty {
-                                        if let Some(segment) = type_path.path.segments.last() {
-                                            if segment.ident == "Option" {
-                                                if let syn::PathArguments::AngleBracketed(args) =
-                                                    &segment.arguments
-                                                {
-                                                    if let Some(syn::GenericArgument::Type(inner)) =
-                                                        args.args.first()
-                                                    {
-                                                        inner.clone()
-                                                    } else {
-                                                        ty.clone()
-                                                    }
-                                                } else {
-                                                    ty.clone()
-                                                }
+    if let Data::Struct(data_struct) = data {
+        if let Fields::Named(fields) = &data_struct.fields {
+            for field in &fields.named {
+                for attr in &field.attrs {
+                    if attr.path().is_ident("command") {
+                        // For syn 2.0, we need to parse the attribute differently
+                        let attr_str = quote!(#attr).to_string();
+                        if attr_str.contains("subcommand") {
+                            let ty = &field.ty;
+                            // Extract the inner type if it's Option<T>
+                            let inner_type = if let Type::Path(type_path) = ty {
+                                if let Some(segment) = type_path.path.segments.last() {
+                                    if segment.ident == "Option" {
+                                        if let syn::PathArguments::AngleBracketed(args) =
+                                            &segment.arguments
+                                        {
+                                            if let Some(syn::GenericArgument::Type(inner)) =
+                                                args.args.first()
+                                            {
+                                                inner.clone()
                                             } else {
                                                 ty.clone()
                                             }
@@ -100,17 +86,19 @@ fn find_subcommand_field(data: &Data) -> Option<(Ident, Type)> {
                                         }
                                     } else {
                                         ty.clone()
-                                    };
-                                    return Some((field.ident.clone()?, inner_type));
+                                    }
+                                } else {
+                                    ty.clone()
                                 }
-                            }
+                            } else {
+                                ty.clone()
+                            };
+                            return Some((field.ident.clone()?, inner_type));
                         }
                     }
                 }
-                _ => {}
             }
         }
-        _ => {}
     }
     None
 }
