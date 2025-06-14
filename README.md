@@ -11,35 +11,66 @@ clap-mcp = "0.1"
 
 ## Quick Start
 
+Here's a complete calculator example that works as both a CLI and MCP server:
+
 ```rust
 use clap::{Parser, Subcommand};
 use clap_mcp::McpMode;
 
 #[derive(Parser, McpMode)]
+#[command(name = "calculator")]
+#[command(about = "A simple calculator CLI that can also run as an MCP server")]
 struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
     
-    /// Run as MCP server
+    /// Run as MCP server instead of CLI
     #[arg(long)]
     #[mcp(mode_flag)]
     mcp: bool,
 }
 
-#[derive(Subcommand)]
+#[derive(Subcommand, Clone)]
 enum Commands {
+    /// Add two numbers
+    Add {
+        #[arg(short, long)]
+        a: f64,
+        #[arg(short, long)]
+        b: f64,
+    },
+    
     /// Multiply two numbers
-    Mul { a: f64, b: f64 },
+    Multiply {
+        #[arg(long)]
+        value1: f64,
+        #[arg(long)]
+        value2: f64,
+    },
+}
+
+fn execute_command(cmd: Commands) -> Result<String, String> {
+    match cmd {
+        Commands::Add { a, b } => {
+            Ok(format!("{} + {} = {}", a, b, a + b))
+        }
+        Commands::Multiply { value1, value2 } => {
+            Ok(format!("{} * {} = {}", value1, value2, value1 * value2))
+        }
+    }
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     
     if cli.mcp {
-        cli.run_mcp_server()?;
+        // Run as MCP server - automatically exposes all commands as tools
+        cli.run_mcp_server_with_handler(execute_command)?;
     } else {
-        match cli.command {
-            Commands::Mul { a, b } => println!("{}", a * b),
+        // Run as normal CLI
+        match execute_command(cli.command.expect("Subcommand required")) {
+            Ok(output) => println!("{}", output),
+            Err(e) => eprintln!("Error: {}", e),
         }
     }
     
@@ -47,15 +78,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-Now your CLI works as both a regular CLI and an MCP server:
+Now your CLI works both ways:
 
 ```bash
-# CLI mode
-$ mycli mul --a 3 --b 4
-12
+# Traditional CLI mode
+$ calculator add -a 10 -b 32
+10 + 32 = 42
 
-# MCP server mode
-$ mycli --mcp
+$ calculator multiply --value1 7 --value2 6
+7 * 6 = 42
+
+# MCP server mode (stdio)
+$ calculator --mcp
+# Server is now running, ready for MCP clients to connect
 ```
 
 ## Real Example: Cast
