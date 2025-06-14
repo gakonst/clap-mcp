@@ -1,0 +1,34 @@
+[package]
+name = "clap-mcp"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+clap = { workspace = true }
+clap-mcp-derive = { path = "../clap-mcp-derive", version = "0.1.0" }
+rmcp = { workspace = true, features = ["client", "server", "transport-io", "transport-sse-server", "transport-sse-client", "reqwest"] }
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+axum = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+anyhow = "1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[[example]]
+name = "calculator"
+path = "../examples/calculator.rs"
+
+[[example]]
+name = "http_mcp_client"
+path = "../examples/http_mcp_client.rs"

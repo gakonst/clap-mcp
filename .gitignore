@@ -1,0 +1,47 @@
+# Rust
+/target/
+/Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Debug
+*.dSYM/
+
+# Backup files
+*.orig
+*.bak
+
+# Test artifacts
+tarpaulin-report.html
+cobertura.xml
+
+# Documentation
+/target/doc/
+/target/criterion/
+
+# Profiling
+perf.data
+perf.data.old
+flamegraph.svg
+*.profdata
+*.profraw
+
+# Python (for mcp_demo.py)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+env/
+.env
