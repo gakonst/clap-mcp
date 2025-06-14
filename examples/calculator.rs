@@ -8,12 +8,12 @@ use clap_mcp::McpMode;
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
-    
+
     /// Run as MCP server instead of CLI
     #[arg(long)]
     #[mcp(mode_flag)]
     mcp: bool,
-    
+
     /// Port to run MCP HTTP server on (if not specified, uses stdio)
     #[arg(long, value_name = "PORT")]
     mcp_port: Option<u16>,
@@ -30,7 +30,7 @@ enum Commands {
         #[arg(short, long)]
         b: f64,
     },
-    
+
     /// Subtract two numbers
     Subtract {
         /// First number
@@ -40,7 +40,7 @@ enum Commands {
         #[arg(short, long)]
         y: f64,
     },
-    
+
     /// Multiply two numbers
     Multiply {
         /// First number
@@ -50,7 +50,7 @@ enum Commands {
         #[arg(long)]
         value2: f64,
     },
-    
+
     /// Divide two numbers
     Divide {
         /// Dividend
@@ -60,7 +60,7 @@ enum Commands {
         #[arg(long)]
         divisor: f64,
     },
-    
+
     /// Say hello to someone
     Hello {
         /// Name to greet
@@ -74,12 +74,8 @@ enum Commands {
 
 fn execute_command(cmd: Commands) -> Result<String, String> {
     match cmd {
-        Commands::Add { a, b } => {
-            Ok(format!("{} + {} = {}", a, b, a + b))
-        }
-        Commands::Subtract { x, y } => {
-            Ok(format!("{} - {} = {}", x, y, x - y))
-        }
+        Commands::Add { a, b } => Ok(format!("{} + {} = {}", a, b, a + b)),
+        Commands::Subtract { x, y } => Ok(format!("{} - {} = {}", x, y, x - y)),
         Commands::Multiply { value1, value2 } => {
             Ok(format!("{} * {} = {}", value1, value2, value1 * value2))
         }
@@ -87,7 +83,12 @@ fn execute_command(cmd: Commands) -> Result<String, String> {
             if divisor == 0.0 {
                 Err("Error: Division by zero!".to_string())
             } else {
-                Ok(format!("{} / {} = {}", dividend, divisor, dividend / divisor))
+                Ok(format!(
+                    "{} / {} = {}",
+                    dividend,
+                    divisor,
+                    dividend / divisor
+                ))
             }
         }
         Commands::Hello { name, excited } => {
@@ -102,7 +103,7 @@ fn execute_command(cmd: Commands) -> Result<String, String> {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
-    
+
     if cli.mcp {
         // Run as MCP server
         if let Some(port) = cli.mcp_port {
@@ -113,7 +114,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     } else {
         // Run as normal CLI
-        match execute_command(cli.command.expect("Subcommand required when not in MCP mode")) {
+        match execute_command(
+            cli.command
+                .expect("Subcommand required when not in MCP mode"),
+        ) {
             Ok(output) => println!("{}", output),
             Err(e) => {
                 eprintln!("{}", e);
@@ -121,6 +125,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
-    
+
     Ok(())
 }

@@ -1,5 +1,9 @@
 # clap-mcp
 
+<div align="center">
+  <img src="logo.svg" width="200" height="200" alt="clap-mcp logo">
+</div>
+
 Turn any Clap CLI into an MCP server with a simple derive macro.
 
 ## Installation
