@@ -1,4 +1,4 @@
-use rmcp::{model::*, transport::SseClientTransport, ServiceExt};
+use clap_mcp::test_client::McpTestClient;
 use serde_json::json;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -8,36 +8,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info,rmcp=debug,reqwest=debug".into()),
+                .unwrap_or_else(|_| "info".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
 
     println!("Connecting to MCP server at http://127.0.0.1:8080...");
-
-    // Connect to the HTTP MCP server
-    let transport = SseClientTransport::start("http://127.0.0.1:8080/sse").await?;
-
-    let client_info = ClientInfo {
-        protocol_version: ProtocolVersion::V_2024_11_05,
-        capabilities: ClientCapabilities::default(),
-        client_info: Implementation {
-            name: "http-test-client".to_string(),
-            version: "1.0".to_string(),
-        },
-    };
-
-    let client = client_info.serve(transport).await?;
-
-    // Server info from initialization
-    let server_info = client.peer_info();
-    println!("Server info: {:?}", server_info);
+    
+    // Connect to server
+    let client = McpTestClient::connect("127.0.0.1:8080").await?;
 
     // List available tools
     println!("\nListing available tools...");
-    let tools = client.list_tools(None).await?;
+    let tools = client.list_tools().await?;
     println!("Available tools:");
-    for tool in &tools.tools {
+    for tool in &tools {
         println!("Tool {{");
         println!("  name: {}", tool.name);
         println!(
@@ -93,97 +78,49 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Call the add tool
     println!("\n=== Testing add(10, 32) ===");
     let result = client
-        .call_tool(CallToolRequestParam {
-            name: "add".into(),
-            arguments: Some(
-                json!({
-                    "a": 10,
-                    "b": 32
-                })
-                .as_object()
-                .unwrap()
-                .clone(),
-            ),
-        })
+        .call_tool("add", Some(json!({ "a": 10, "b": 32 })))
         .await?;
 
     if result.is_error.unwrap_or(false) {
         println!("Error in result");
     } else {
-        for content in &result.content {
-            match &content.raw {
-                RawContent::Text(text_content) => println!("Result: {}", text_content.text),
-                RawContent::Image(_) => println!("Result: [image]"),
-                RawContent::Resource(_) => println!("Result: [resource]"),
-                RawContent::Audio(_) => println!("Result: [audio]"),
-            }
+        if let Some(text) = McpTestClient::extract_text(&result) {
+            println!("Result: {}", text);
         }
     }
 
     // Call multiply
     println!("\n=== Testing multiply(7, 6) ===");
     let result = client
-        .call_tool(CallToolRequestParam {
-            name: "multiply".into(),
-            arguments: Some(
-                json!({
-                    "value1": 7,
-                    "value2": 6
-                })
-                .as_object()
-                .unwrap()
-                .clone(),
-            ),
-        })
+        .call_tool("multiply", Some(json!({ "value1": 7, "value2": 6 })))
         .await?;
 
     if result.is_error.unwrap_or(false) {
         println!("Error in result");
     } else {
-        for content in &result.content {
-            match &content.raw {
-                RawContent::Text(text_content) => println!("Result: {}", text_content.text),
-                RawContent::Image(_) => println!("Result: [image]"),
-                RawContent::Resource(_) => println!("Result: [resource]"),
-                RawContent::Audio(_) => println!("Result: [audio]"),
-            }
+        if let Some(text) = McpTestClient::extract_text(&result) {
+            println!("Result: {}", text);
         }
     }
 
     // Call hello
     println!("\n=== Testing hello(MCP User, excited=true) ===");
     let result = client
-        .call_tool(CallToolRequestParam {
-            name: "hello".into(),
-            arguments: Some(
-                json!({
-                    "name": "MCP User",
-                    "excited": true
-                })
-                .as_object()
-                .unwrap()
-                .clone(),
-            ),
-        })
+        .call_tool("hello", Some(json!({ "name": "MCP User", "excited": true })))
         .await?;
 
     if result.is_error.unwrap_or(false) {
         println!("Error in result");
     } else {
-        for content in &result.content {
-            match &content.raw {
-                RawContent::Text(text_content) => println!("Result: {}", text_content.text),
-                RawContent::Image(_) => println!("Result: [image]"),
-                RawContent::Resource(_) => println!("Result: [resource]"),
-                RawContent::Audio(_) => println!("Result: [audio]"),
-            }
+        if let Some(text) = McpTestClient::extract_text(&result) {
+            println!("Result: {}", text);
         }
     }
 
     println!("\nAll tests complete!");
 
     // Clean shutdown
-    client.cancel().await?;
+    client.shutdown().await?;
 
     Ok(())
 }
