@@ -28,6 +28,10 @@ struct Cli {
     #[arg(long)]
     #[mcp(mode_flag)]
     mcp: bool,
+    
+    /// Port to run MCP HTTP server on (if not specified, uses stdio)
+    #[arg(long, value_name = "PORT")]
+    mcp_port: Option<u16>,
 }
 
 #[derive(Subcommand, Clone)]
@@ -65,7 +69,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     if cli.mcp {
         // Run as MCP server - automatically exposes all commands as tools
-        cli.run_mcp_server_with_handler(execute_command)?;
+        if let Some(port) = cli.mcp_port {
+            // HTTP server mode on specified port
+            let addr = format!("127.0.0.1:{}", port).parse()?;
+            cli.run_mcp_server_http_with_handler(addr, execute_command)?;
+        } else {
+            // stdio mode (default)
+            cli.run_mcp_server_with_handler(execute_command)?;
+        }
     } else {
         // Run as normal CLI
         match execute_command(cli.command.expect("Subcommand required")) {
@@ -91,6 +102,10 @@ $ calculator multiply --value1 7 --value2 6
 # MCP server mode (stdio)
 $ calculator --mcp
 # Server is now running, ready for MCP clients to connect
+
+# MCP server mode (HTTP on specific port)
+$ calculator --mcp --mcp-port 8080
+# Server running on http://127.0.0.1:8080, ready for HTTP-based MCP clients
 ```
 
 ## Real Example: Cast
